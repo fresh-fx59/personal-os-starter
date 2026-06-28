@@ -1,0 +1,12 @@
+{
+  "name": "personal-os-starter",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "An Obsidian vault that is its own agent harness — agents document work as versioned markdown.",
+  "scripts": {
+    "lint": "node harness/lint-notes.mjs",
+    "garden": "node harness/lint-notes.mjs --garden"
+  },
+  "license": "MIT"
+}

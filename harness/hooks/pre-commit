@@ -1,0 +1,29 @@
+#!/bin/sh
+# Personal OS verify hook — ADVISORY note lint before each commit.
+#
+# This never blocks a commit. obsidian-git auto-commits from a GUI process with a
+# minimal PATH (no /usr/local/bin), and a personal backup must always succeed —
+# a nit you can fix later should never stall it. It prints lint output as a
+# reminder; the ENFORCING check is `npm run lint`, which exits non-zero on errors
+# and is what an agent runs before calling a note done.
+
+# Locate a Node binary even when PATH is minimal (GUI launch).
+NODE=""
+for c in node /usr/local/bin/node /opt/homebrew/bin/node; do
+  if command -v "$c" >/dev/null 2>&1; then NODE=$(command -v "$c"); break; fi
+done
+if [ -z "$NODE" ]; then
+  for c in "$HOME"/.nvm/versions/node/*/bin/node; do
+    [ -x "$c" ] && { NODE="$c"; break; }
+  done
+fi
+
+if [ -z "$NODE" ]; then
+  echo "personal-os: Node not found — skipping note lint (commit allowed)." >&2
+  exit 0
+fi
+
+if ! "$NODE" harness/lint-notes.mjs; then
+  echo "personal-os: note lint issues above (commit allowed). Run 'npm run lint' to fix." >&2
+fi
+exit 0

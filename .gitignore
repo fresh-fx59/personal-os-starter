@@ -1,0 +1,21 @@
+# OS / editor cruft
+.DS_Store
+*.swp
+*~
+
+# Obsidian per-machine state (volatile, not worth syncing)
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/cache
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Agent worktrees + browser-debug artifacts (session-local, never sync)
+.claude/worktrees/
+.playwright-mcp/
+
+# Personal per-machine agent overrides (never sync; CLAUDE.md itself IS committed)
+CLAUDE.local.md
+AGENTS.override.md
