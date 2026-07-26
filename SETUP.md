@@ -79,9 +79,21 @@ npm run lint
 
 That's it — you have a working Personal OS.
 
-### 6. (Optional) Turn on the guards
+### 6. (Optional) Turn on the hooks
 
-Both ship inert until you configure them — do it now, or delete them.
+All three ship inert until you wire them up — do it now, or delete them.
+
+**checkpoint** — the one to keep even if you skip the rest. Before you `/clear`, the
+`checkpoint` skill writes the session's state into its project note's `## Current
+state`; `checkpoint-restore.sh` re-injects exactly that section into the next session.
+Nothing to configure beyond registering the hook (below) — the skill writes the pointer
+at `~/.claude/last-checkpoint` itself. Verify it end-to-end whenever you change it:
+
+```sh
+printf '%s\n' "$PWD/projects/active/some-note.md" > ~/.claude/last-checkpoint
+echo '{"source":"clear"}' | .claude/hooks/checkpoint-restore.sh   # prints the section
+echo '{"source":"startup"}' | .claude/hooks/checkpoint-restore.sh # silent, exit 0
+```
 
 **pii-guard** — stop your personal data reaching a public repo:
 

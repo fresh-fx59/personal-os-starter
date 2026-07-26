@@ -65,27 +65,27 @@ Each content folder has an `index.md` catalog. Start narrow, follow links.
 
 ## Pick your own top priority
 
-You set the rules of your own vault. A common, high-value one: **if `incidents/`
-has any note with `status: active` that is a live problem, make resolving it the
-top priority for the session — above whatever else is on screen — unless you
-explicitly say otherwise.** Encode whatever priority rule matters to you here, in
-your own words; this is your repo.
+You set the rules of your own vault. A common, high-value one: **if `incidents/` has a
+note with `status: active` that is a live problem, resolving it outranks whatever else
+is on screen, unless you say otherwise.** Encode your own priority rule here.
 
 ## Tools & agent skills
 
 `tools/` and `.claude/skills/` ship working, tested pieces — read their READMEs first.
-Two habits they encode: **`tools/pii-guard/`** blocks your personal data from reaching
-a public repo (fill in its denylist — it ships blank), and **`skills/secret-use/`** +
-`hooks/secret-read-guard.sh` mean an agent never types a secret path inline; it calls a
-wrapper that keeps the value out of `ps`, logs, and the transcript.
+The habits they encode: **`checkpoint`** saves session state into a note before `/clear`
+(continuity lives in git, not in a transcript); **`pii-guard`** keeps personal data out
+of public repos (fill in its denylist — it ships blank); **`secret-use`** +
+`secret-read-guard.sh` stop an agent ever typing a secret path inline.
+
+Keep skills and tools **here in the vault**, not in an agent's own config directory, and
+symlink them in. They then work with any agent, and they are versioned and backed up.
 
 ## Verify before you hand over a command
 
-**Time is expensive — never ask someone to run something you haven't proven
-works.** Before handing over a command or fix, reproduce it on throwaway test data
-(fake inputs, a temp dir, dummy creds) and confirm the *real* outcome, not that it
-"should" work. If a guard blocks the live target, verify the *mechanics* on a
-stand-in and hand over only the proven command.
+**Time is expensive — never ask someone to run something you haven't proven works.**
+Reproduce it on throwaway test data (fake inputs, a temp dir, dummy creds) and confirm
+the *real* outcome, not that it "should" work. If a guard blocks the live target, verify
+the *mechanics* on a stand-in and hand over only the proven command.
 
 ## Boundaries
 

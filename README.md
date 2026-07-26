@@ -54,6 +54,7 @@ operate safely — all tested, all optional:
 
 | Piece | Why it's here |
 |-------|---------------|
+| [`.claude/skills/checkpoint/`](.claude/skills/checkpoint/SKILL.md) + [`hooks/checkpoint-restore.sh`](.claude/hooks/checkpoint-restore.sh) | Save a session's state into a note *before* you `/clear`, then have the fresh session auto-reload just that section. Continuity lives in git, not in a giant transcript — this is the prime directive applied to the agent's own context. |
 | [`tools/pii-guard/`](tools/pii-guard/README.md) | Visibility-aware pre-commit hook: blocks your personal data and secret-shaped strings from entering a **public** repo, passes silently on private ones. **Fill in its denylist — it ships blank.** |
 | [`.claude/hooks/secret-read-guard.sh`](.claude/hooks/secret-read-guard.sh) | A `PreToolUse` hook that denies any agent command which would print a secret inline, and nudges it to the right wrapper. Autonomous (no prompt), fails open. 37 tests. |
 | [`.claude/skills/secret-use/`](.claude/skills/secret-use/SKILL.md) | The wrappers that guard points at — call an API, run a program, send mail or a message with a secret, without the value ever reaching `ps`, logs, or the transcript. 26 tests. |

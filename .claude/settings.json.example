@@ -1,10 +1,9 @@
 {
   "_comment": [
-    "Example Claude Code settings wiring the secret-read guard. Copy the `hooks`",
+    "Example Claude Code settings wiring this vault's two hooks. Copy the `hooks`",
     "block into your ~/.claude/settings.json (user-level, so it applies to every",
     "session on the machine) and replace <VAULT> with this vault's absolute path.",
-    "The guard fails open and matches every tool itself, so `matcher: *` is correct;",
-    "it inspects only Bash/Read/Grep/Glob and stays silent on everything else.",
+    "Both hooks fail open and are independent — keep either one alone if you prefer.",
     "Delete this _comment key if you copy the file verbatim — JSON has no comments."
   ],
   "hooks": {
@@ -17,6 +16,19 @@
             "command": "<VAULT>/.claude/hooks/secret-read-guard.sh",
             "timeout": 10,
             "statusMessage": "secret-read guard (denies + nudges to a wrapper; autonomous, never halts)"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "<VAULT>/.claude/hooks/checkpoint-restore.sh",
+            "timeout": 10,
+            "statusMessage": "restoring the last checkpoint's Current state"
           }
         ]
       }
