@@ -127,7 +127,7 @@ def main():
                         "Blocked: `sops decrypt` would reveal decrypted secret contents. "
                         "Runtime values are already rendered under /run/secrets/ — USE them via "
                         f"`{SU}/with-secret.sh <name> --file-env VAR -- <cmd>`, not by decrypting. "
-                        "Decrypting/editing sops files is an operator-console operation."
+                        "Decrypting or editing the encrypted files is a human operation."
                     )
                 elif ("SOPS_AGE_KEY" in command
                       or ("keys.txt" in command and "age" in command)
