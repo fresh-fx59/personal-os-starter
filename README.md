@@ -47,6 +47,23 @@ npm run lint
   npm run garden    # also surface stale notes to tidy up
   ```
 
+## What ships with it
+
+Beyond the note structure, the vault includes the working pieces an agent needs to
+operate safely — all tested, all optional:
+
+| Piece | Why it's here |
+|-------|---------------|
+| [`tools/pii-guard/`](tools/pii-guard/README.md) | Visibility-aware pre-commit hook: blocks your personal data and secret-shaped strings from entering a **public** repo, passes silently on private ones. **Fill in its denylist — it ships blank.** |
+| [`.claude/hooks/secret-read-guard.sh`](.claude/hooks/secret-read-guard.sh) | A `PreToolUse` hook that denies any agent command which would print a secret inline, and nudges it to the right wrapper. Autonomous (no prompt), fails open. 37 tests. |
+| [`.claude/skills/secret-use/`](.claude/skills/secret-use/SKILL.md) | The wrappers that guard points at — call an API, run a program, send mail or a message with a secret, without the value ever reaching `ps`, logs, or the transcript. 26 tests. |
+| [`tools/tg-export/`](tools/tg-export/README.md) + [`telegram-export-mining`](.claude/skills/telegram-export-mining/SKILL.md) | Turn a Telegram Desktop export into JSONL and mine a 40k-message history inside a token budget, without a naive scraper silently losing a fifth of it. 22 tests. |
+
+Everything here is generic. The infrastructure-specific tooling that lives in the
+vault this was extracted from — ssh wrappers, deploy scripts, monitoring queries —
+is deliberately left out: those encode hostnames and accounts, and are exactly what
+`pii-guard` exists to keep out of a public repo.
+
 ## Where to start reading
 
 `AGENTS.md` is the map (Claude Code loads it through the one-line `CLAUDE.md` that

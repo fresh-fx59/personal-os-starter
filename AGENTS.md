@@ -31,6 +31,8 @@ stays in chat, in your head, or in a terminal you closed.
 | `templates/` | Copy these to start a new note. |
 | `dashboards/` | Index / overview notes. |
 | `harness/` | The verify step (`lint-notes.mjs`), schema, and gardener. |
+| `tools/` | Small CLI tools the agents use — see `tools/README.md`. |
+| `.claude/` | Agent skills (`skills/`) and guard hooks (`hooks/`). |
 
 Each content folder has an `index.md` catalog. Start narrow, follow links.
 
@@ -46,8 +48,8 @@ Each content folder has an `index.md` catalog. Start narrow, follow links.
 1. **Pick a home** and copy the matching file from `templates/`.
 2. **Fill the frontmatter** (see `harness/schema.md`): `title, type, status,
    created, updated, tags, links`.
-3. **Write the body.** For projects and incidents keep a running **Timeline** and
-   **Decision log** — plans are first-class artifacts, not afterthoughts.
+3. **Write the body.** Projects keep an overwrite-in-place **Current state** section
+   (linter-enforced); projects and incidents keep a **Timeline** and **Decision log**.
 4. **Link it** from the folder's `index.md` and from any related note.
 5. **Bump `updated`** to today's date.
 6. **Verify**: run `npm run lint`. Fix every `✗` error.
@@ -68,6 +70,14 @@ has any note with `status: active` that is a live problem, make resolving it the
 top priority for the session — above whatever else is on screen — unless you
 explicitly say otherwise.** Encode whatever priority rule matters to you here, in
 your own words; this is your repo.
+
+## Tools & agent skills
+
+`tools/` and `.claude/skills/` ship working, tested pieces — read their READMEs first.
+Two habits they encode: **`tools/pii-guard/`** blocks your personal data from reaching
+a public repo (fill in its denylist — it ships blank), and **`skills/secret-use/`** +
+`hooks/secret-read-guard.sh` mean an agent never types a secret path inline; it calls a
+wrapper that keeps the value out of `ps`, logs, and the transcript.
 
 ## Verify before you hand over a command
 

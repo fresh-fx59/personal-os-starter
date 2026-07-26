@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# pii-guard pre-commit — block your PII from entering a PUBLIC repo.
+#
+# Visibility-aware by design: a leak into a public repo is permanent, so we BLOCK
+# there; your private vault legitimately holds your chat ids / IPs, and its backups
+# must never be blocked ("corrections are cheap, waiting is expensive"), so we PASS
+# on private/unknown. Fails OPEN on any error — this hook must never be the reason a
+# commit or a backup is lost.
+#
+# Bypass a false positive with:  git commit --no-verify
+set -u
+
+HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
+SCANNER="$HOOK_DIR/../pii-secret-scan.sh"
+# Fallback for a globally-wired hook (core.hooksPath) whose scanner lives elsewhere:
+# set PII_GUARD_SCANNER to an absolute path, or leave it — we degrade to pass-through.
+[ -x "$SCANNER" ] || SCANNER="${PII_GUARD_SCANNER:-$SCANNER}"
+[ -x "$SCANNER" ] || exit 0
+
+# --- resolve remote owner/repo -------------------------------------------------
+remote="$(git config --get remote.origin.url 2>/dev/null)"
+# Hard allowlist: repos that legitimately hold your personal data are never gated
+# here (your private vault first of all). Match on the remote URL.
+case "$remote" in
+  *personal-os*) exit 0 ;;
+esac
+
+slug="$(printf '%s' "$remote" | sed -E 's#^git@[^:]+:##; s#^https?://[^/]+/##; s#\.git$##')"
+
+# --- determine visibility (cached; network only once) --------------------------
+vis="unknown"
+cache="$(git rev-parse --git-dir 2>/dev/null)/.pii-guard-visibility"
+if [ -f "$cache" ]; then
+  vis="$(cat "$cache" 2>/dev/null)"
+elif command -v gh >/dev/null 2>&1 && [ -n "$slug" ]; then
+  vis="$(gh api "repos/$slug" --jq '.visibility' 2>/dev/null || echo unknown)"
+  [ -n "$vis" ] && printf '%s' "$vis" > "$cache" 2>/dev/null
+fi
+
+# --- enforce only on confirmed-public -----------------------------------------
+if [ "$vis" = "public" ]; then
+  if ! out="$("$SCANNER" --staged . 2>/dev/null)"; then
+    echo "──────────────────────────────────────────────────────────────────" >&2
+    echo "pii-guard: BLOCKED — this commit adds operator PII / a secret to a" >&2
+    echo "PUBLIC repo ($slug). Offending additions:" >&2
+    echo "$out" | sed 's/^/    /' >&2
+    echo "" >&2
+    echo "Replace with a placeholder, or (if a false positive) re-run with" >&2
+    echo "    git commit --no-verify" >&2
+    echo "──────────────────────────────────────────────────────────────────" >&2
+    exit 1
+  fi
+else
+  # private / unknown → advisory only, never block
+  if [ "$vis" = "unknown" ] && ! "$SCANNER" --staged . >/dev/null 2>&1; then
+    echo "pii-guard: note — staged changes match PII patterns, but repo visibility" >&2
+    echo "is unknown (not confirmed public), so the commit is allowed. If this repo" >&2
+    echo "is or will be public, scrub before publishing. Run: $SCANNER" >&2
+  fi
+fi
+exit 0

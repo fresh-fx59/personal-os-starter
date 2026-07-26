@@ -18,14 +18,18 @@
 // else is a WARN (reported, never blocks). Every message injects a remediation
 // hint so the next agent can self-correct without a human.
 
-import { readdirSync, readFileSync, lstatSync } from "node:fs";
+import { readdirSync, readFileSync, lstatSync, existsSync } from "node:fs";
 import { join, relative, basename } from "node:path";
+import { homedir } from "node:os";
 
 const ROOT = process.cwd();
 const GARDEN = process.argv.includes("--garden");
 
 // --- configuration ---------------------------------------------------------
-const IGNORE_DIRS = new Set([".git", ".obsidian", "node_modules", ".trash"]);
+// Code and agent config are not knowledge notes — `tools/` ships scripts with their
+// own READMEs, `.claude/` holds agent skills/hooks. Walking them would demand vault
+// frontmatter of ordinary documentation.
+const IGNORE_DIRS = new Set([".git", ".claude", ".obsidian", "node_modules", ".trash", "tools"]);
 const TYPES = ["project", "incident", "decision", "reference", "area", "dashboard"];
 const STATUSES = ["idea", "active", "blocked", "done", "archived"];
 const REQUIRED = ["title", "type", "status", "created", "updated"];
@@ -107,6 +111,23 @@ function walk(dir, acc = []) {
   return acc;
 }
 
+// asset basenames (non-.md files: images, pdfs, …) so Obsidian embeds like
+// ![[diagram.png]] — which resolve by basename against attachments — aren't misread
+// as broken NOTE links. Same walk discipline as walk(): skip symlinks + IGNORE_DIRS.
+function walkAssets(dir, acc = []) {
+  for (const name of readdirSync(dir)) {
+    const full = join(dir, name);
+    const st = lstatSync(full);
+    if (st.isSymbolicLink()) continue;
+    if (st.isDirectory()) {
+      if (!IGNORE_DIRS.has(name)) walkAssets(full, acc);
+    } else if (!name.endsWith(".md")) {
+      acc.push(name.toLowerCase());
+    }
+  }
+  return acc;
+}
+
 const files = walk(ROOT);
 const errors = [];
 const warns = [];
@@ -120,6 +141,25 @@ for (const f of files) {
   noteIds.add(rel.replace(/\.md$/, "").toLowerCase());
   noteIds.add(basename(rel, ".md").toLowerCase());
 }
+
+// Two reference classes a vault legitimately uses but that live outside the .md note
+// set — resolve them so the broken-link WARN flags only GENUINE breaks instead of
+// drowning them in noise:
+//
+//  1. Agent-memory notes — an agent's per-project memory directory (Claude Code keeps
+//     one at ~/.claude/projects/<slug>/memory/*.md). Vault notes [[link]] to these;
+//     they are real notes, just outside the walked tree. Box-specific and existsSync-
+//     guarded: on CI / another machine the dir is absent, so these correctly
+//     re-surface there rather than silently passing.
+//  2. Asset embeds — Obsidian ![[diagram.png]] embeds resolve by basename against
+//     attachments; walkAssets indexes every non-.md vault file basename.
+const memoryDir = join(homedir(), ".claude", "projects", ROOT.replaceAll("/", "-"), "memory");
+if (existsSync(memoryDir)) {
+  for (const name of readdirSync(memoryDir)) {
+    if (name.endsWith(".md")) noteIds.add(basename(name, ".md").toLowerCase());
+  }
+}
+for (const base of walkAssets(ROOT)) noteIds.add(base);
 
 // folder -> set of note basenames linked from its index.md (for coverage hints)
 const indexLinks = new Map();
@@ -159,10 +199,36 @@ for (const f of files) {
     }
   }
 
-  // oversized note hint (taste invariant)
-  if (!isExempt(rel) && lines.length > NOTE_SOFT_LINES) {
+  // oversized note hint (taste invariant). Exempt restore-source notes: a note that
+  // embeds a live script verbatim as its restore source (a "## Script: `<path>`"
+  // block — enforced byte-identical below) is legitimately large and CANNOT be split
+  // without breaking that recovery contract. A standing expected warning would also
+  // mask a future genuine oversize on the same file.
+  const isRestoreSourceNote = /^##\s+Script:\s+`/m.test(text);
+  if (!isExempt(rel) && !isRestoreSourceNote && lines.length > NOTE_SOFT_LINES) {
     warn(rel, `note is ${lines.length} lines (> ${NOTE_SOFT_LINES})`,
       "Consider splitting into focused notes and linking them.");
+  }
+
+  // ---- restore-source drift (WARN) ----
+  // Convention: a "## Script: `<path>`" heading whose next fenced block is the
+  // VERBATIM contents of a live, NON-git-tracked file (e.g. ~/.claude/hooks/*). That
+  // embedded block IS the restore source — a machine rebuild or a lost ~/.claude
+  // restores from the doc — so it must stay byte-identical to the live file. This is
+  // the drift that silently rots hand-edited hooks. Only checked where the live file
+  // exists (skipped on CI / another machine), and a WARN not an err() because it is
+  // machine-specific and can't be a central gate — promote it to err() if you want it
+  // to hard-block on the machine you edit from.
+  for (const m of text.matchAll(/^##\s+Script:\s+`([^`]+)`[^\n]*\n(?:[ \t]*\n)*```[a-z-]*\n([\s\S]*?)\r?\n```/gm)) {
+    const [, rawPath, block] = m;
+    const livePath = rawPath.replace(/^(~|\$HOME)(?=\/)/, homedir());
+    if (livePath.startsWith("/") && existsSync(livePath)) {
+      const norm = (s) => s.replace(/\r\n/g, "\n").replace(/\n+$/, "");
+      if (norm(readFileSync(livePath, "utf8")) !== norm(block)) {
+        warn(rel, `restore-source drift: embedded \`${rawPath}\` block ≠ the live file`,
+          `Reconcile them (the block is the restore source): copy the live ${rawPath} into the fenced block, or apply the doc's version to the live file, then re-run lint.`);
+      }
+    }
   }
 
   // ---- content-note frontmatter schema (ERRORs: block commits) ----
@@ -191,6 +257,13 @@ for (const f of files) {
   if (fm.updated && !isoDate(fm.updated)) err(rel, `'updated' is not YYYY-MM-DD`, "Use an ISO date, e.g. 2026-06-08.");
   if (isoDate(fm.created) && isoDate(fm.updated) && fm.updated < fm.created) {
     err(rel, "'updated' is before 'created'", "Bump 'updated' to the date you last touched the note.");
+  }
+  // projects must carry an overwrite-in-place "## Current state" section so a fresh
+  // session reads one section instead of replaying the whole Timeline
+  // (convention: docs/conventions.md).
+  if (fm.type === "project" && !lines.some((l) => /^##\s+Current state\s*$/i.test(l))) {
+    err(rel, "project note has no '## Current state' section",
+      "Add '## Current state' (first line 'As of YYYY-MM-DD'; overwrite in place — history stays in Timeline).");
   }
 
   // ---- coverage + freshness (WARNs / garden) ----

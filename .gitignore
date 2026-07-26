@@ -19,3 +19,10 @@ npm-debug.log*
 # Personal per-machine agent overrides (never sync; CLAUDE.md itself IS committed)
 CLAUDE.local.md
 AGENTS.override.md
+
+# Python bytecode (tools/)
+__pycache__/
+*.pyc
+
+# Agent SDD scratch (briefs/reports/ledgers) — session-local, never vault content
+.superpowers/

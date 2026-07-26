@@ -79,6 +79,39 @@ npm run lint
 
 That's it — you have a working Personal OS.
 
+### 6. (Optional) Turn on the guards
+
+Both ship inert until you configure them — do it now, or delete them.
+
+**pii-guard** — stop your personal data reaching a public repo:
+
+```sh
+$EDITOR tools/pii-guard/pii-secret-scan.sh   # fill in the FILL ME block: your ids,
+                                             # emails, surname, server IPs
+tools/pii-guard/pii-secret-scan.sh .         # should print: clean
+tools/pii-guard/install.sh ~/code/some-public-repo   # arm it per repo…
+git config --global core.hooksPath "$PWD/tools/pii-guard/hooks"   # …or globally
+```
+
+The vault itself is allowlisted, and keeps its own advisory hook from step 3.
+Details and the layered strategy: `tools/pii-guard/README.md`.
+
+**secret-read-guard** — stop an agent printing a secret into the transcript. It
+assumes secrets are rendered as one file per secret (`/run/secrets/<name>`, the
+sops-nix convention); point `SECRETS_DIR` elsewhere if yours differ.
+
+```sh
+export SECRET_USE_DIR="$PWD/.claude/skills/secret-use"   # absolute; also editable in the hook
+bash .claude/hooks/secret-read-guard.test.sh             # 37 tests
+bash .claude/skills/secret-use/secret-use.test.sh        # 26 tests
+ln -s "$PWD/.claude/hooks/secret-read-guard.sh" ~/.claude/hooks/   # committed copy IS the live one
+```
+
+Then register it as a `PreToolUse` hook — copy the `hooks` block from
+`.claude/settings.json.example` into your `~/.claude/settings.json` and replace
+`<VAULT>` with this directory's absolute path. Rationale and the wrapper table:
+`.claude/skills/secret-use/SKILL.md` and `docs/conventions.md`.
+
 ## First commit
 
 ```sh
@@ -121,4 +154,7 @@ If you're an agent setting this up, do these in order and confirm each:
 3. Create the private repo (step 2). **Do not push until the user approves.**
 4. Run `sh harness/install.sh` and `npm run lint`; report the output.
 5. Tell the user to do the Obsidian + plugin steps (4) — you can't click in their GUI.
-6. Stop and hand back. The user owns the content; you set up the harness.
+6. Offer the optional guards (step 6). **`pii-guard`'s denylist needs the user's own
+   identifiers** — ask for them, don't guess; run the two test suites and report the
+   counts.
+7. Stop and hand back. The user owns the content; you set up the harness.

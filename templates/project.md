@@ -16,6 +16,13 @@ links: []
 
 -
 
+## Current state
+
+> As of {{date:YYYY-MM-DD}}. Overwrite this section in place — it is current-truth
+> ONLY (what is live/decided right now); history belongs in Timeline / Decision log.
+
+-
+
 ## Timeline
 
 - {{date:YYYY-MM-DD}} — created.
