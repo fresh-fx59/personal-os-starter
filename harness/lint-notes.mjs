@@ -34,13 +34,14 @@ const TYPES = ["project", "incident", "decision", "reference", "area", "dashboar
 const STATUSES = ["idea", "active", "blocked", "done", "archived"];
 const REQUIRED = ["title", "type", "status", "created", "updated"];
 const AGENTS_MAX_LINES = 120; // AGENTS.md is a short index, not an encyclopedia
+const SOUL_MAX_LINES = 45;    // a soul that rambles gets ignored — every line must change behavior
 const NOTE_SOFT_LINES = 400;  // taste invariant: oversized notes should be split
 const STALE_DAYS = 180;       // garden: notes untouched this long get a freshness hint
 
 // Meta / harness docs are exempt from the *content-note* frontmatter schema.
 // They are scaffolding, not knowledge notes. They still get lighter checks.
 const EXEMPT = [
-  /(^|\/)AGENTS\.md$/, /(^|\/)CLAUDE\.md$/, /^ARCHITECTURE\.md$/, /^README\.md$/,
+  /(^|\/)AGENTS\.md$/, /(^|\/)CLAUDE\.md$/, /^SOUL\.md$/, /^ARCHITECTURE\.md$/, /^README\.md$/,
   /^SETUP\.md$/, /^CONTRIBUTING\.md$/,
   /^docs\//, /^harness\//, /^templates\//, /^dashboards\//,
   /(^|\/)index\.md$/,
@@ -182,6 +183,12 @@ for (const f of files) {
       "It's a table of contents, not an encyclopedia. Move detail into docs/ and link to it.");
   }
 
+  // SOUL.md (operator voice + reply contract) must stay readable in one glance
+  if (rel === "SOUL.md" && lines.length > SOUL_MAX_LINES) {
+    err(rel, `SOUL.md is ${lines.length} lines (limit ${SOUL_MAX_LINES})`,
+      "A soul that rambles gets ignored. Cut until every line changes behavior.");
+  }
+
   // every index / dashboard must have an H1 so the map has a title
   if ((/(^|\/)index\.md$/.test(rel) || rel.startsWith("dashboards/")) &&
       !lines.some((l) => /^#\s+\S/.test(l))) {
@@ -290,6 +297,19 @@ for (const f of files) {
         "Garden it: refresh the note, or set status to done/archived/blocked.");
     }
   }
+}
+
+// --- soul wiring -----------------------------------------------------------
+// The reply contract works only if every session actually loads it: SOUL.md
+// must exist and CLAUDE.md must @import it (AGENTS.md carries the pointer).
+// Un-importing it would silently kill the contract — make that a hard error.
+if (!existsSync(join(ROOT, "SOUL.md"))) {
+  err("SOUL.md", "SOUL.md is missing",
+    "Restore it — the operator voice + reply contract live there (pointer in AGENTS.md).");
+} else if (!existsSync(join(ROOT, "CLAUDE.md")) ||
+           !readFileSync(join(ROOT, "CLAUDE.md"), "utf8").includes("@SOUL.md")) {
+  err("CLAUDE.md", "CLAUDE.md does not import @SOUL.md",
+    "The soul exists only if every session loads it — add '@SOUL.md' beside '@AGENTS.md'.");
 }
 
 // today's date without touching wall-clock at import time (garden mode only)

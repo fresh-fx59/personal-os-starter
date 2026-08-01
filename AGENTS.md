@@ -18,6 +18,8 @@ versioned markdown the next agent can read. Anything not committed to this repo
 does not exist — if it isn't written here, the agent can't act on it. No knowledge
 stays in chat, in your head, or in a terminal you closed.
 
+> **Reply contract (operator chat):** line 1 of every reply = `DONE`/`ACTION NEEDED`/`DECISION NEEDED`/`BLOCKED`/`FYI` + bottom line; last block `From you:` = nothing or exact steps. Voice + full rules: `SOUL.md` (loaded every session).
+
 ## Where things live
 
 | Folder | What it holds |
@@ -100,16 +102,14 @@ the *mechanics* on a stand-in and hand over only the proven command.
 ## Constraints (enforced mechanically)
 
 - Frontmatter schema, kebab-case filenames, ISO dates — see `harness/schema.md`.
-- `npm run lint` fails on schema errors — fix every `✗`. The pre-commit hook runs
-  it **advisorily** and never blocks your obsidian-git backup. Broken links, stale
-  notes, and size stay warnings — a nit you can fix later should never stall a backup.
+- `npm run lint` fails on schema errors — fix every `✗`. The pre-commit hook runs it
+  **advisorily** and never blocks your obsidian-git backup. Broken links, stale notes, and size stay warnings — a nit you can fix later should never stall a backup.
 - Within those boundaries you have full freedom of voice and structure.
 
 ## When you're uncertain
 
-Don't guess silently. Record the uncertainty **in the note** (an `## Open
-questions` section); if it needs a human, set `status: blocked` and say what
-you're waiting on. A blocked note with a clear question beats a confident wrong one.
+Don't guess silently. Record the uncertainty **in the note** (an `## Open questions` section);
+if it needs a human, set `status: blocked` and say what you're waiting on. A blocked note with a clear question beats a confident wrong one.
 
 ## Improving the harness
 

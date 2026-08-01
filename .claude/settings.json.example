@@ -1,9 +1,9 @@
 {
   "_comment": [
-    "Example Claude Code settings wiring this vault's two hooks. Copy the `hooks`",
+    "Example Claude Code settings wiring this vault's three hooks. Copy the `hooks`",
     "block into your ~/.claude/settings.json (user-level, so it applies to every",
     "session on the machine) and replace <VAULT> with this vault's absolute path.",
-    "Both hooks fail open and are independent — keep either one alone if you prefer.",
+    "All hooks fail open and are independent — keep any subset you prefer.",
     "Delete this _comment key if you copy the file verbatim — JSON has no comments."
   ],
   "hooks": {
@@ -29,6 +29,18 @@
             "command": "<VAULT>/.claude/hooks/checkpoint-restore.sh",
             "timeout": 10,
             "statusMessage": "restoring the last checkpoint's Current state"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "<VAULT>/.claude/hooks/soul-reminder.sh",
+            "timeout": 5,
+            "statusMessage": "soul reminder (SOUL.md reply contract, ~90 tokens)"
           }
         ]
       }

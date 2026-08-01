@@ -54,6 +54,7 @@ operate safely — all tested, all optional:
 
 | Piece | Why it's here |
 |-------|---------------|
+| [`SOUL.md`](SOUL.md) + [`hooks/soul-reminder.sh`](.claude/hooks/soul-reminder.sh) | The operator **reply contract**: every answer opens with `DONE`/`ACTION NEEDED`/`DECISION NEEDED`/`BLOCKED`/`FYI` + the bottom line, and ends with a `From you:` block; facts beat agreement. Loaded every session via `CLAUDE.md`, re-anchored each turn by the hook, and the linter fails if it's ever unwired. Ships as the real, lived-in file from the source vault — distilled from mining 271 sessions for the moments the operator had to say "I didn't understand". Rewrite *Who you are* for your own operator. |
 | [`.claude/skills/checkpoint/`](.claude/skills/checkpoint/SKILL.md) + [`hooks/checkpoint-restore.sh`](.claude/hooks/checkpoint-restore.sh) | Save a session's state into a note *before* you `/clear`, then have the fresh session auto-reload just that section. Continuity lives in git, not in a giant transcript — this is the prime directive applied to the agent's own context. |
 | [`tools/limit-anchor/`](tools/limit-anchor/README.md) | Keep your session warm *on your schedule*: a five-hourly ping that anchors the subscription's rolling usage window to a grid you chose, so a reset never lands mid-afternoon. One command to install on systemd, launchd, or cron. 27 tests. |
 | [`tools/pii-guard/`](tools/pii-guard/README.md) | Visibility-aware pre-commit hook: blocks your personal data and secret-shaped strings from entering a **public** repo, passes silently on private ones. **Fill in its denylist — it ships blank.** |
@@ -68,8 +69,8 @@ is deliberately left out: those encode hostnames and accounts, and are exactly w
 
 ## Where to start reading
 
-`AGENTS.md` is the map (Claude Code loads it through the one-line `CLAUDE.md` that
-imports it). Then `docs/core-beliefs.md` and `docs/conventions.md`.
+`AGENTS.md` is the map and `SOUL.md` is the voice (Claude Code loads both through
+the `CLAUDE.md` that imports them). Then `docs/core-beliefs.md` and `docs/conventions.md`.
 `ARCHITECTURE.md` explains how the vault is built, and
 `docs/references/harness-engineering.md` explains the idea behind it.
 
