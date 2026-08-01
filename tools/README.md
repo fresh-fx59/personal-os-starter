@@ -8,6 +8,7 @@ documentation, not knowledge notes, so it is not held to the frontmatter schema.
 
 | Tool | What it does |
 |------|--------------|
+| [`limit-anchor/`](limit-anchor/README.md) | Fires one cheap ping every five hours so the Claude subscription's rolling usage window opens **at times you chose**, not whenever your first message of the day landed. Installs a systemd user timer, a launchd agent, or cron lines. |
 | [`pii-guard/`](pii-guard/README.md) | Visibility-aware pre-commit hook + scanner that blocks your personal data and secret-shaped strings from entering a **public** repo. **Configure the denylist before trusting it.** |
 | [`tg-export/`](tg-export/README.md) | Zero-dependency parser turning a Telegram Desktop HTML export into JSONL, plus `search` / `window` / `thread` / `stats` subcommands for mining a large chat history inside a token budget. Paired with the `telegram-export-mining` skill. |
 

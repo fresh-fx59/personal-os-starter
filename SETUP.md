@@ -95,6 +95,22 @@ echo '{"source":"clear"}' | .claude/hooks/checkpoint-restore.sh   # prints the s
 echo '{"source":"startup"}' | .claude/hooks/checkpoint-restore.sh # silent, exit 0
 ```
 
+**limit-anchor** — stop your usage window resetting at a useless time of day. The
+five-hour window starts on your *first request*, so one throwaway question at
+06:40 makes it expire at 11:40, mid-morning. Anchor it to a grid you chose
+instead:
+
+```sh
+tools/limit-anchor/anchor-ping.test.sh                  # 27 tests, no API calls
+tools/limit-anchor/install.sh --first-anchor 07:00 --dry-run   # inspect the grid
+tools/limit-anchor/install.sh --first-anchor 07:00      # systemd / launchd / cron
+```
+
+Pick `--first-anchor` to be roughly when your day starts; the other three anchors
+follow from it. Why four and not five, and why they are 5h03m apart rather than
+5h, is in `tools/limit-anchor/README.md` — both answers are counter-intuitive and
+worth reading before you edit the grid.
+
 **pii-guard** — stop your personal data reaching a public repo:
 
 ```sh
@@ -168,5 +184,6 @@ If you're an agent setting this up, do these in order and confirm each:
 5. Tell the user to do the Obsidian + plugin steps (4) — you can't click in their GUI.
 6. Offer the optional guards (step 6). **`pii-guard`'s denylist needs the user's own
    identifiers** — ask for them, don't guess; run the two test suites and report the
-   counts.
+   counts. For `limit-anchor`, **ask what time their working day starts** and pass that
+   as `--first-anchor`; don't invent a grid, and don't skip `--dry-run`.
 7. Stop and hand back. The user owns the content; you set up the harness.

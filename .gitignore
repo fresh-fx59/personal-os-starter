@@ -24,5 +24,8 @@ AGENTS.override.md
 __pycache__/
 *.pyc
 
+# limit-anchor per-machine config (paths + model choice; copy from the .example)
+tools/limit-anchor/anchor.conf
+
 # Agent SDD scratch (briefs/reports/ledgers) — session-local, never vault content
 .superpowers/

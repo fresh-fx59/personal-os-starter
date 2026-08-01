@@ -1,0 +1,28 @@
+# limit-anchor configuration — copy to anchor.conf to use.
+#   cp anchor.conf.example anchor.conf
+# anchor-ping.sh sources this file if it exists. Everything is optional.
+
+# Path to the claude CLI. Timers get a minimal PATH, so if `claude` lives in a
+# version manager's shim directory, spell it out here.
+# CLAUDE_BIN=/usr/local/bin/claude
+
+# Model for the ping. Keep it the cheapest one — this call exists to start a
+# clock, not to think.
+# CC_ANCHOR_MODEL=haiku
+
+# Hard cap on a single ping, in seconds. Must stay below your timer's own
+# start-timeout (the systemd unit installs with TimeoutStartSec=20m).
+# CC_ANCHOR_TIMEOUT=900
+
+# Scratch working directory for the ping, kept empty on purpose so the CLI has
+# no project context to load.
+# CC_ANCHOR_PING_CWD="$HOME/.cache/limit-anchor-ping"
+
+# --- optional integration with a pause-at-threshold guard -------------------
+# Off by default: this starter does not ship such a guard, and stamping a file
+# nothing reads is just confusing. Turn it on only if you run a PreToolUse hook
+# that pauses when a window is nearly spent, and point STATE at its state file.
+# CC_ANCHOR_STAMP_GUARD_STATE=1
+# CC_LIMIT_GUARD_STATE="$HOME/.claude/rate-limit-state.json"
+# CC_LIMIT_GUARD_THRESHOLD=98
+# CC_LIMIT_GUARD_STATE_TTL=21600
